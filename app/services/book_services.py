@@ -125,3 +125,28 @@ def get_all_books(page, limit, price=None, release_date=None):
         "current_page": paginated_books.page,
         "books": books_data
     }
+
+
+def update_book(data):
+    book_id = data["id"]
+
+    book = Book.query.get(book_id)
+
+    if not book:
+        return None
+
+    if "title" in data:
+        book.title = data["title"]
+
+    if "description" in data:
+        book.description = data["description"]
+
+    if "price" in data:
+        book.price = data["price"]
+
+    if "release_date" in data:
+        book.release_date = data["release_date"]
+
+    db.session.commit()
+    
+    return book
