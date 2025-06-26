@@ -1,1 +1,1 @@
-from .user_service import create_user
+from .user_service import create_user, authenticate_user
