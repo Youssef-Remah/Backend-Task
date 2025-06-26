@@ -25,4 +25,8 @@ def create_app():
 
     from app import models
 
+    from app.routes.user_routes import user_bp
+
+    app.register_blueprint(user_bp)
+
     return app
