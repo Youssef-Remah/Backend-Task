@@ -11,5 +11,5 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     SQLALCHEMY_DATABASE_URI = (
-        "mssql+pyodbc://@DESKTOP-5BI4L12/OnlineLibraryDB?driver=ODBC+Driver+17+for+SQL+Server;Trusted_Connection=yes"
+        "mssql+pyodbc://@DESKTOP-5BI4L12/OnlineLibraryDB?driver=ODBC%20Driver%2017%20for%20SQL%20Server&trusted_connection=yes"
     )
