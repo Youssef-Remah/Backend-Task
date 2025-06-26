@@ -80,3 +80,48 @@ def get_book_by_id(book_id):
         "authors": author_names,
         "categories": category_names
     }
+
+
+def get_all_books(page, limit, price=None, release_date=None):
+    query = Book.query.order_by(Book.created_at.desc())
+
+    if price is not None:
+        query = query.filter(Book.price == price)
+
+    if release_date is not None:
+        query = query.filter(Book.release_date == release_date)
+
+    paginated_books = query.paginate(page=page, per_page=limit, error_out=False)
+
+    books_data = []
+
+    for book in paginated_books.items:
+        author_ids = db.session.query(BookAuthor.author_id).filter_by(book_id=book.id).all()
+
+        authors = Author.query.filter(Author.id.in_([a[0] for a in author_ids])).all()
+
+        author_names = [author.name for author in authors]
+
+        category_ids = db.session.query(BookCategory.category_id).filter_by(book_id=book.id).all()
+
+        categories = Category.query.filter(Category.id.in_([c[0] for c in category_ids])).all()
+
+        category_names = [category.name for category in categories]
+
+        books_data.append({
+            "id": book.id,
+            "title": book.title,
+            "description": book.description,
+            "price": book.price,
+            "release_date": book.release_date.strftime("%Y-%m-%d"),
+            "created_at": book.created_at.strftime("%Y-%m-%d %H:%M:%S") if book.created_at else None,
+            "authors": author_names,
+            "categories": category_names
+        })
+
+    return {
+        "total": paginated_books.total,
+        "pages": paginated_books.pages,
+        "current_page": paginated_books.page,
+        "books": books_data
+    }

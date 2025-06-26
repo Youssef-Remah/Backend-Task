@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
 from app.schemas.book_schemas import BookCreateSchema
-from app.services.book_services import create_book, get_book_by_id
+from app.services.book_services import create_book, get_book_by_id, get_all_books
 from flask_jwt_extended import jwt_required
 
 book_bp = Blueprint("books", __name__, url_prefix="/books")
@@ -41,3 +41,27 @@ def get_book(book_id):
     book_data = get_book_by_id(book_id)
 
     return jsonify(book_data), 200
+
+
+@book_bp.route("", methods=["GET"])
+@jwt_required()
+def list_books():
+    """
+    Returns a paginated list of books with their authors and categories.
+    Query parameters:
+    - page: which page to return (default = 1)
+    - limit: how many books per page (default = 5)
+    - price: filter books by exact price
+    - release_date: filter books by exact release date (YYYY-MM-DD)
+    """
+    page = request.args.get("page", default=1, type=int)
+
+    limit = request.args.get("limit", default=5, type=int)
+
+    price = request.args.get("price", type=float)
+
+    release_date = request.args.get("release_date")
+
+    result = get_all_books(page, limit, price, release_date)
+
+    return jsonify(result), 200
