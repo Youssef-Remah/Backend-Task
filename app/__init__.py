@@ -33,6 +33,10 @@ def create_app():
 
     app.register_blueprint(user_bp)
 
+    from app.routes.book_routes import book_bp
+    
+    app.register_blueprint(book_bp)
+
     swagger = Swagger(app, template_file='swagger.yaml')
 
     return app
