@@ -8,6 +8,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
 from flask_migrate import Migrate
+from flasgger import Swagger
 
 
 db = SQLAlchemy()
@@ -28,5 +29,7 @@ def create_app():
     from app.routes.user_routes import user_bp
 
     app.register_blueprint(user_bp)
+
+    swagger = Swagger(app, template_file='swagger.yaml')
 
     return app

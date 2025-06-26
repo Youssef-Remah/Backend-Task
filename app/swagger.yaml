@@ -1,0 +1,42 @@
+swagger: "2.0"
+info:
+  title: Online Library System API
+  description: API documentation for the Online Library System
+  version: "1.0"
+host: localhost:5000
+basePath: /
+schemes:
+  - http
+paths:
+  /users/signUp:
+    post:
+      tags:
+        - Users
+      summary: Register a new user
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            required:
+              - Name
+              - Email
+              - Password
+            properties:
+              Name:
+                type: string
+                example: "John Doe"
+              Email:
+                type: string
+                example: "john@example.com"
+              Password:
+                type: string
+                example: "secret123"
+      responses:
+        201:
+          description: User created successfully
+        400:
+          description: Validation error
