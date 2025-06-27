@@ -1,6 +1,6 @@
 # Online Library System (Backend Task)
 
-A web-based system for managing an online library, allowing users to sign up, log in, and manage books, authors, and categories.
+A backend system for managing an online library, allowing users to sign up, log in, and manage books, authors, and categories.
 
 ## Tech Stack
 - **Backend:** Python, Flask, SQLAlchemy
