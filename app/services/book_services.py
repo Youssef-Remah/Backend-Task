@@ -1,8 +1,11 @@
 from app import db
 from app.models import Book, Author, Category, BookAuthor, BookCategory
 from flask import abort, make_response, jsonify
+from datetime import datetime
+from collections import defaultdict
 
-#Helpers
+#Start of Helpers
+
 def _get_or_create_author(author_name):
     """Helper to find or create an author"""
 
@@ -46,6 +49,9 @@ def _validate_book_data(data):
     if not data.get("category_names"):
         raise ValueError("At least one category is required")
 
+#End of Helpers
+
+#Start of Service Methods
 
 def create_book(data):
 
@@ -154,49 +160,83 @@ def get_book_by_id(book_id):
         )
 
 def get_all_books(page, limit, price=None, release_date=None):
-    query = Book.query.order_by(Book.created_at.desc())
 
-    if price is not None:
-        query = query.filter(Book.price == price)
+    try:
+        if page < 1 or limit < 1:
+            return make_response(
+                jsonify({"error": "Page and limit must be positive integers", "code": 400}),
+                400
+            )
 
-    if release_date is not None:
-        query = query.filter(Book.release_date == release_date)
+        query = Book.query.order_by(Book.created_at.desc())
 
-    paginated_books = query.paginate(page=page, per_page=limit, error_out=False)
+        #Apply filters
+        if price is not None:
+            query = query.filter(Book.price == price)
 
-    books_data = []
+        if release_date is not None:
+            try:
+                query = query.filter(Book.release_date == datetime.strptime(release_date, "%Y-%m-%d").date())
+            except ValueError:
+                return make_response(
+                    jsonify({"error": "Invalid date format (use YYYY-MM-DD)", "code": 400}),
+                    400
+                )
 
-    for book in paginated_books.items:
-        author_ids = db.session.query(BookAuthor.author_id).filter_by(book_id=book.id).all()
+        paginated_books = query.paginate(page=page, per_page=limit, error_out=False)
 
-        authors = Author.query.filter(Author.id.in_([a[0] for a in author_ids])).all()
+        book_ids = [book.id for book in paginated_books.items]
+        
+        #{AuthorName: [book_ids, ...], ...}
+        authors_map = defaultdict(list)
+        authors = db.session.query(Author.name, BookAuthor.book_id)\
+                   .join(BookAuthor, Author.id == BookAuthor.author_id)\
+                   .filter(BookAuthor.book_id.in_(book_ids))\
+                   .all()
+        
+        for name, book_id in authors:
+            authors_map[book_id].append(name)
 
-        author_names = [author.name for author in authors]
+       #{CategoryName: [book_ids, ...], ...}
+        categories_map = defaultdict(list)
+        categories = db.session.query(Category.name, BookCategory.book_id)\
+                      .join(BookCategory, Category.id == BookCategory.category_id)\
+                      .filter(BookCategory.book_id.in_(book_ids))\
+                      .all()
+        
+        for name, book_id in categories:
+            categories_map[book_id].append(name)
 
-        category_ids = db.session.query(BookCategory.category_id).filter_by(book_id=book.id).all()
+        books_data = []
+        
+        for book in paginated_books.items:
+            books_data.append({
+                "id": book.id,
+                "title": book.title,
+                "description": book.description,
+                "price": book.price,
+                "release_date": book.release_date.strftime("%Y-%m-%d"),
+                "created_at": book.created_at.strftime("%Y-%m-%d %H:%M:%S") if book.created_at else None,
+                "authors": authors_map.get(book.id, []),
+                "categories": categories_map.get(book.id, [])
+            })
 
-        categories = Category.query.filter(Category.id.in_([c[0] for c in category_ids])).all()
+        return make_response(
+            jsonify({
+                "total": paginated_books.total,
+                "pages": paginated_books.pages,
+                "current_page": paginated_books.page,
+                "books": books_data,
+                "code": 200
+            }),
+            200
+        )
 
-        category_names = [category.name for category in categories]
-
-        books_data.append({
-            "id": book.id,
-            "title": book.title,
-            "description": book.description,
-            "price": book.price,
-            "release_date": book.release_date.strftime("%Y-%m-%d"),
-            "created_at": book.created_at.strftime("%Y-%m-%d %H:%M:%S") if book.created_at else None,
-            "authors": author_names,
-            "categories": category_names
-        })
-
-    return {
-        "total": paginated_books.total,
-        "pages": paginated_books.pages,
-        "current_page": paginated_books.page,
-        "books": books_data
-    }
-
+    except Exception as e:
+        return make_response(
+            jsonify({"error": "Failed to fetch books", "details": str(e), "code": 500}),
+            500
+        )
 
 def update_book(data):
     book_id = data["id"]
@@ -221,3 +261,5 @@ def update_book(data):
     db.session.commit()
     
     return book
+
+#End of Service Methods

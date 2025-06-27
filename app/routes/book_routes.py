@@ -33,25 +33,15 @@ def get_book(book_id):
 @book_bp.route("", methods=["GET"])
 @jwt_required()
 def list_books():
-    """
-    Returns a paginated list of books with their authors and categories.
-    Query parameters:
-    - page: which page to return (default = 1)
-    - limit: how many books per page (default = 5)
-    - price: filter books by exact price
-    - release_date: filter books by exact release date (YYYY-MM-DD)
-    """
     page = request.args.get("page", default=1, type=int)
-
+    
     limit = request.args.get("limit", default=5, type=int)
-
+    
     price = request.args.get("price", type=float)
-
+    
     release_date = request.args.get("release_date")
-
-    result = get_all_books(page, limit, price, release_date)
-
-    return jsonify(result), 200
+    
+    return get_all_books(page, limit, price, release_date)
 
 @book_bp.route("", methods=["PATCH"])
 @jwt_required()
