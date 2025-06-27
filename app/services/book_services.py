@@ -1,53 +1,95 @@
 from app import db
 from app.models import Book, Author, Category, BookAuthor, BookCategory
-from flask import abort
+from flask import abort, make_response, jsonify
+
+#Helpers
+def _get_or_create_author(author_name):
+    """Helper to find or create an author"""
+
+    author = Author.query.filter_by(name=author_name).first()
+
+    if not author:
+        author = Author(name=author_name)
+
+        db.session.add(author)
+
+        db.session.flush()
+
+    return author
+
+def _get_or_create_category(category_name):
+    """Helper to find or create a category"""
+
+    category = Category.query.filter_by(name=category_name).first()
+
+    if not category:
+        category = Category(name=category_name)
+
+        db.session.add(category)
+
+        db.session.flush()
+
+    return category
+
+def _validate_book_data(data):
+    """Validation checks"""
+
+    if not data.get("title"):
+        raise ValueError("Title is required")
+
+    if not isinstance(data.get("price"), (int, float)):
+        raise ValueError("Price must be a number")
+
+    if not data.get("author_names"):
+        raise ValueError("At least one author is required")
+
+    if not data.get("category_names"):
+        raise ValueError("At least one category is required")
+
 
 def create_book(data):
-    existing_book = Book.query.filter_by(title=data["title"]).first()
 
-    if existing_book:
-        abort(400, description="A book with this title already exists")
-
-    book = Book(
-        title=data["title"],
-        description=data.get("description"),
-        price=data["price"],
-        release_date=data["release_date"]
-    )
-
-    db.session.add(book)
-
-    db.session.flush()
-
-    for author_name in data["author_names"]:
+    try:
+        _validate_book_data(data)
         
-        author = Author.query.filter_by(name=author_name).first()
+        if Book.query.filter_by(title=data["title"]).first():
+            return make_response(
+                jsonify({"error": "Book title already exists", "code": 400}),
+                400
+            )
 
-        if not author:
-            author = Author(name=author_name)
+        book = Book(
+            title=data["title"],
+            description=data.get("description"),
+            price=data["price"],
+            release_date=data["release_date"]
+        )
+        db.session.add(book)
+        db.session.flush()
 
-            db.session.add(author)
+        #Process authors
+        for author_name in data["author_names"]:
+            author = _get_or_create_author(author_name)
+            db.session.add(BookAuthor(book_id=book.id, author_id=author.id))
 
-            db.session.flush()
+        #Process categories
+        for category_name in data["category_names"]:
+            category = _get_or_create_category(category_name)
+            db.session.add(BookCategory(book_id=book.id, category_id=category.id))
+
+        db.session.commit()
+        return book
+
+    except ValueError as e:
+        db.session.rollback()
+        return make_response(jsonify({"error": str(e), "code": 400}), 400)
         
-        db.session.add(BookAuthor(book_id=book.id, author_id=author.id))
-
-    for category_name in data["category_names"]:
-
-        category = Category.query.filter_by(name=category_name).first()
-
-        if not category:
-            category = Category(name=category_name)
-
-            db.session.add(category)
-            
-            db.session.flush()
-
-        db.session.add(BookCategory(book_id=book.id, category_id=category.id))
-
-    db.session.commit()
-    
-    return book
+    except Exception as e:
+        db.session.rollback()
+        return make_response(
+            jsonify({"error": "Book creation failed", "details": str(e), "code": 500}),
+            500
+        )
 
 
 def get_book_by_id(book_id):
