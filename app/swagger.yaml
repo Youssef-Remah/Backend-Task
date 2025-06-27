@@ -91,7 +91,7 @@ paths:
         400:
           description: "Validation error or duplicate title"
           schema:
-            $ref: "#/definitions/ErrorResponse"
+            $ref: "#/definitions/BookPostErrorResponse"
         500:
           description: "Server error"
           schema:
@@ -127,7 +127,7 @@ paths:
         400:
           description: "Invalid parameters"
           schema:
-            $ref: "#/definitions/ErrorResponse"
+            $ref: "#/definitions/BookGetErrorResponse"
         500:
           description: "Server error"
           schema:
@@ -161,7 +161,7 @@ paths:
         404:
           description: "Book not found"
           schema:
-            $ref: "#/definitions/ErrorResponse"
+            $ref: "#/definitions/BookPatchErrorResponse"
         500:
           description: "Server error"
           schema:
@@ -187,11 +187,11 @@ paths:
         400:
           description: "Invalid ID format"
           schema:
-            $ref: "#/definitions/ErrorResponse"
+            $ref: "#/definitions/InvalidIdErrorResponse"
         404:
           description: "Book not found"
           schema:
-            $ref: "#/definitions/ErrorResponse"
+            $ref: "#/definitions/BookPatchErrorResponse"
         500:
           description: "Server error"
           schema:
@@ -284,6 +284,58 @@ definitions:
         type: "integer"
         example: 400
 
+  BookPostErrorResponse:
+    type: "object"
+    properties:
+      error:
+        type: "string"
+        example: "Validation error"
+      errors:
+        type: "object"
+        example: {"title": ["duplicate title"]}
+      code:
+        type: "integer"
+        example: 400
+
+  BookGetErrorResponse:
+    type: "object"
+    properties:
+      error:
+        type: "string"
+        example: "Validation error"
+      errors:
+        type: "object"
+        example: {"msg": ["Invalid parameters"]}
+      code:
+        type: "integer"
+        example: 400
+
+  InvalidIdErrorResponse:
+    type: "object"
+    properties:
+      error:
+        type: "string"
+        example: "Validation error"
+      errors:
+        type: "object"
+        example: {"msg": ["Invalid ID"]}
+      code:
+        type: "integer"
+        example: 400
+
+  BookPatchErrorResponse:
+    type: "object"
+    properties:
+      error:
+        type: "string"
+        example: "Validation error"
+      errors:
+        type: "object"
+        example: {"msg": ["Book not found"]}
+      code:
+        type: "integer"
+        example: 400    
+  
   ServerError:
     type: "object"
     properties:
@@ -427,5 +479,9 @@ securityDefinitions:
     type: "apiKey"
     name: "Authorization"
     in: "header"
-    description: "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'"
+    description: >
+      Paste your JWT token **with** `Bearer` prefix. Example:  
+      `Bearer eyJhbGciOiJIUzI1NiIsInR...`
 
+security:
+  - BearerAuth: []
