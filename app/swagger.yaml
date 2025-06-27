@@ -1,42 +1,431 @@
 swagger: "2.0"
 info:
-  title: Online Library System API
-  description: API documentation for the Online Library System
-  version: "1.0"
-host: localhost:5000
-basePath: /
-schemes:
-  - http
+  title: "Online Library API"
+  description: "User authentication endpoints"
+  version: "1.0.0"
 paths:
   /users/signUp:
     post:
       tags:
         - Users
-      summary: Register a new user
+      summary: "Register a new user"
       consumes:
-        - application/json
+        - "application/json"
+      produces:
+        - "application/json"
       parameters:
-        - in: body
-          name: body
+        - in: "body"
+          name: "body"
           required: true
           schema:
-            type: object
-            required:
-              - Name
-              - Email
-              - Password
-            properties:
-              Name:
-                type: string
-                example: "John Doe"
-              Email:
-                type: string
-                example: "john@example.com"
-              Password:
-                type: string
-                example: "secret123"
+            $ref: "#/definitions/UserSignUp"
       responses:
         201:
-          description: User created successfully
+          description: "User created successfully"
+          schema:
+            $ref: "#/definitions/UserResponse"
         400:
-          description: Validation error
+          description: "Validation error or email exists"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/ServerError"
+
+  /users/login:
+    post:
+      tags:
+        - Authentication
+      summary: "Authenticate user"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/UserLogin"
+      responses:
+        200:
+          description: "Login successful"
+          schema:
+            $ref: "#/definitions/AuthResponse"
+        400:
+          description: "Validation error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        401:
+          description: "Invalid credentials"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/ServerError"
+
+  /books:
+    post:
+      tags:
+        - Books
+      summary: "Create a new book"
+      security:
+        - Bearer: []
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/BookCreate"
+      responses:
+        201:
+          description: "Book created successfully"
+          schema:
+            $ref: "#/definitions/BookResponse"
+        400:
+          description: "Validation error or duplicate title"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/ServerError"
+
+    get:
+      tags:
+        - Books
+      summary: "List all books (paginated and filtered)"
+      security:
+        - Bearer: []
+      parameters:
+        - name: "page"
+          in: "query"
+          type: "integer"
+          default: 1
+        - name: "limit"
+          in: "query"
+          type: "integer"
+          default: 5
+        - name: "price"
+          in: "query"
+          type: "number"
+        - name: "release_date"
+          in: "query"
+          type: "string"
+          format: "date"
+      responses:
+        200:
+          description: "Paginated list of books"
+          schema:
+            $ref: "#/definitions/BookListResponse"
+        400:
+          description: "Invalid parameters"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/ServerError"
+
+    patch:
+      tags:
+        - Books
+      summary: "Update a book"
+      security:
+        - Bearer: []
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/BookUpdate"
+      responses:
+        200:
+          description: "Book updated successfully"
+          schema:
+            $ref: "#/definitions/BookResponse"
+        400:
+          description: "Validation error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        404:
+          description: "Book not found"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/ServerError"
+
+  /books/{book_id}:
+    get:
+      tags:
+        - Books
+      summary: "Get a single book by ID"
+      security:
+        - Bearer: []
+      parameters:
+        - name: "book_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        200:
+          description: "Book details"
+          schema:
+            $ref: "#/definitions/BookFullResponse"
+        400:
+          description: "Invalid ID format"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        404:
+          description: "Book not found"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/ServerError"
+
+definitions:
+  UserSignUp:
+    type: "object"
+    required:
+      - "name"
+      - "email"
+      - "password"
+    properties:
+      name:
+        type: "string"
+        example: "John Doe"
+        minLength: 3
+      email:
+        type: "string"
+        format: "email"
+        example: "user@example.com"
+      password:
+        type: "string"
+        example: "securepassword123"
+        minLength: 6
+
+  UserLogin:
+    type: "object"
+    required:
+      - "Email"
+      - "Password"
+    properties:
+      Email:
+        type: "string"
+        format: "email"
+        example: "user@example.com"
+      Password:
+        type: "string"
+        example: "securepassword123"
+        minLength: 6
+
+  UserResponse:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        example: 1
+      name:
+        type: "string"
+        example: "John Doe"
+      email:
+        type: "string"
+        example: "user@example.com"
+      code:
+        type: "integer"
+        example: 201
+
+  AuthResponse:
+    type: "object"
+    properties:
+      access_token:
+        type: "string"
+        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      user:
+        type: "object"
+        properties:
+          id:
+            type: "integer"
+            example: 1
+          name:
+            type: "string"
+            example: "John Doe"
+          email:
+            type: "string"
+            example: "user@example.com"
+      code:
+        type: "integer"
+        example: 200
+
+  ErrorResponse:
+    type: "object"
+    properties:
+      error:
+        type: "string"
+        example: "Validation error"
+      errors:
+        type: "object"
+        example: {"email": ["Invalid email format"]}
+      code:
+        type: "integer"
+        example: 400
+
+  ServerError:
+    type: "object"
+    properties:
+      error:
+        type: "string"
+        example: "Server error"
+      details:
+        type: "string"
+        example: "Database connection failed"
+      code:
+        type: "integer"
+        example: 500
+  
+  BookCreate:
+    type: "object"
+    required:
+      - "title"
+      - "price"
+      - "release_date"
+      - "author_names"
+      - "category_names"
+    properties:
+      title:
+        type: "string"
+        example: "The Great Gatsby"
+      description:
+        type: "string"
+        example: "A story of wealth and love in the 1920s"
+      price:
+        type: "number"
+        format: "float"
+        example: 15.99
+      release_date:
+        type: "string"
+        format: "date"
+        example: "1925-04-10"
+      author_names:
+        type: "array"
+        items:
+          type: "string"
+        example: ["F. Scott Fitzgerald"]
+      category_names:
+        type: "array"
+        items:
+          type: "string"
+        example: ["Classic", "Fiction"]
+
+  BookUpdate:
+    type: "object"
+    required:
+      - "id"
+    properties:
+      id:
+        type: "integer"
+        example: 1
+      title:
+        type: "string"
+        example: "The Great Gatsby (Revised Edition)"
+      description:
+        type: "string"
+      price:
+        type: "number"
+        format: "float"
+      release_date:
+        type: "string"
+        format: "date"
+
+  BookResponse:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        example: 1
+      title:
+        type: "string"
+      description:
+        type: "string"
+      price:
+        type: "number"
+        format: "float"
+      release_date:
+        type: "string"
+        format: "date"
+      code:
+        type: "integer"
+        example: 201
+
+  BookFullResponse:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        example: 1
+      title:
+        type: "string"
+      description:
+        type: "string"
+      price:
+        type: "number"
+        format: "float"
+      release_date:
+        type: "string"
+        format: "date"
+      created_at:
+        type: "string"
+        format: "date-time"
+      authors:
+        type: "array"
+        items:
+          type: "string"
+      categories:
+        type: "array"
+        items:
+          type: "string"
+      code:
+        type: "integer"
+        example: 200
+
+  BookListResponse:
+    type: "object"
+    properties:
+      total:
+        type: "integer"
+        example: 42
+      pages:
+        type: "integer"
+        example: 5
+      current_page:
+        type: "integer"
+        example: 1
+      books:
+        type: "array"
+        items:
+          $ref: "#/definitions/BookFullResponse"
+      code:
+        type: "integer"
+        example: 200
+
+securityDefinitions:
+  Bearer:
+    type: "apiKey"
+    name: "Authorization"
+    in: "header"
+    description: "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'"
+
