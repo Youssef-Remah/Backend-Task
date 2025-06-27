@@ -1,6 +1,17 @@
 from marshmallow import Schema, fields, validates, validates_schema, ValidationError
 
 class BookCreateSchema(Schema):
+    """
+    Validates book creation data
+
+    Fields:
+        title (str): Book title (required)
+        description (str): Optional description
+        price (float): Required price
+        release_date (date): YYYY-MM-DD format (required)
+        author_names (list[str]): Min 1 author required
+        category_names (list[str]): Min 1 category required
+    """
     title = fields.Str(required=True)
 
     description = fields.Str()
@@ -23,6 +34,16 @@ class BookCreateSchema(Schema):
 
 
 class BookUpdateSchema(Schema):
+    """
+    Validates book update data
+
+    Fields:
+        id (int): Positive book ID (required)
+        title (str): Optional new title
+        description (str): Optional new description
+        price (float): Optional new price
+        release_date (date): Optional new date (YYYY-MM-DD)
+    """
     id = fields.Int(required=True)
 
     title = fields.Str()
