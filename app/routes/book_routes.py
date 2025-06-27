@@ -46,29 +46,13 @@ def list_books():
 @book_bp.route("", methods=["PATCH"])
 @jwt_required()
 def edit_book():
-    """
-    Updates a book's details (excluding authors and categories)
-    Requires 'id' in the body
-    Accepts partial update of: title, description, price, release_date
-    """
-    schema = BookUpdateSchema()
-
     try:
-        data = schema.load(request.json, partial=True)
+        data = BookUpdateSchema().load(request.json, partial=True)
 
-    except ValidationError as err:
-        return jsonify({"errors": err.messages}), 400
-
-    book = update_book(data)
-
-    if not book:
-        return jsonify({"error": "Book not found"}), 404
-
-    return jsonify({
-        "id": book.id,
-        "title": book.title,
-        "description": book.description,
-        "price": book.price,
-        "release_date": book.release_date.strftime("%Y-%m-%d"),
-        "created_at": book.created_at.strftime("%Y-%m-%d %H:%M:%S") if book.created_at else None
-    }), 200
+        return update_book(data)
+    
+    except ValidationError as e:
+        return make_response(
+            jsonify({"errors": e.messages, "code": 400}),
+            400
+        )

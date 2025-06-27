@@ -239,27 +239,67 @@ def get_all_books(page, limit, price=None, release_date=None):
         )
 
 def update_book(data):
-    book_id = data["id"]
 
-    book = Book.query.get(book_id)
+    try:
+        if not data.get("id") or data["id"] <= 0:
+            return make_response(
+                jsonify({"error": "Valid book ID is required", "code": 400}),
+                400
+            )
 
-    if not book:
-        return None
+        book = Book.query.get(data["id"])
+        
+        if not book:
+            return make_response(
+                jsonify({"error": "Book not found", "code": 404}),
+                404
+            )
 
-    if "title" in data:
-        book.title = data["title"]
+        updated = False
 
-    if "description" in data:
-        book.description = data["description"]
+        if "title" in data and data["title"] != book.title:
+            book.title = data["title"]
+            updated = True
 
-    if "price" in data:
-        book.price = data["price"]
+        if "description" in data and data["description"] != book.description:
+            book.description = data["description"]
+            updated = True
 
-    if "release_date" in data:
-        book.release_date = data["release_date"]
+        if "price" in data and data["price"] != book.price:
+            book.price = data["price"]
+            updated = True
 
-    db.session.commit()
-    
-    return book
+        if "release_date" in data and data["release_date"] != book.release_date:
+            book.release_date = data["release_date"]
+            updated = True
+
+        if not updated:
+            return make_response(
+                jsonify({"warning": "No changes detected", "code": 200}),
+                200
+            )
+
+        db.session.commit()
+
+        return make_response(
+            jsonify({
+                "id": book.id,
+                "title": book.title,
+                "description": book.description,
+                "price": book.price,
+                "release_date": book.release_date.strftime("%Y-%m-%d"),
+                "created_at": book.created_at.strftime("%Y-%m-%d %H:%M:%S") if book.created_at else None,
+                "code": 200
+            }),
+            200
+        )
+
+    except Exception as e:
+        db.session.rollback()
+
+        return make_response(
+            jsonify({"error": "Book update failed", "details": str(e), "code": 500}),
+            500
+        )
 
 #End of Service Methods
