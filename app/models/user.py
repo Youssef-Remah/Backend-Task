@@ -1,12 +1,16 @@
 from app import db
 
-"""
-This entity class:
-
--Inherits from the base class 'db.Model'
--Represents the 'Users' table in the database
-"""
 class User(db.Model):
+    """
+    Database model representing system users
+
+    Fields:
+        id (int): Primary key
+        name (str): Full name (required, max 120 chars)
+        email (str): Unique email address (required, max 120 chars)
+        password (str): Hashed password (required, max 255 chars)
+        created_at (datetime): Account creation timestamp (auto-set)
+    """
     __tablename__ = 'Users'
 
     id = db.Column("Id", db.Integer, primary_key=True)

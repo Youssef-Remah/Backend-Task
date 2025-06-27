@@ -1,12 +1,17 @@
 from app import db
 
-"""
-This entity class:
-
--Inherits from the base class 'db.Model'
--Represents the 'Books' table in the database
-"""
 class Book(db.Model):
+    """
+    Database model representing books in the system
+
+    Fields:
+        id (int): Primary key
+        title (str): Book title (required, max 200 chars)
+        description (str): Optional book summary
+        price (float): Retail price (required)
+        release_date (date): Publication date (required)
+        created_at (datetime): When record was created (auto-set)
+    """
     __tablename__ = 'Books'
 
     id = db.Column("Id", db.Integer, primary_key=True)
