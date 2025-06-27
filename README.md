@@ -29,9 +29,9 @@ http://localhost:5000/apidocs
 ```
 
 ## Authorize with JWT
-1. First, sign up via the `/signup` endpoint
+1. First, sign up via the `users/signUp` endpoint
 
-2. Then log in via `/login` to get the JWT token
+2. Then log in via `users/login` to get the JWT token
 
 3. Click the **Authorize** button in Swagger and paste your token like this:
       ```
