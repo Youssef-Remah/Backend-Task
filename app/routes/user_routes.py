@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response
 from marshmallow import ValidationError
-from app.schemas import UserSignUpSchema
+from app.schemas.user_schemas import UserSignUpSchema, UserLoginSchema
 from app.services import create_user, authenticate_user
 
 #a blue print for organizing routes related to users
@@ -20,15 +20,16 @@ def sign_up():
             400
         )
 
-
 @user_bp.route('/login', methods=['POST'])
 def login():
-    data = request.json
 
-    email = data.get("Email")
+    try:
+        data = UserLoginSchema().load(request.json)
 
-    password = data.get("Password")
-
-    response_data, status_code = authenticate_user(email, password)
-
-    return jsonify(response_data), status_code
+        return authenticate_user(data['Email'], data['Password'])
+        
+    except ValidationError as e:
+        return make_response(
+            jsonify({"errors": e.messages, "code": 400}),
+            400
+        )

@@ -40,25 +40,51 @@ def create_user(data):
             500
         )
 
-
 def authenticate_user(email, password):
-    """
-    -Validates the user and generates a JWT token if valid
-    
-    -Returns: response_data: dict and status_code: int
-    """
-    user = User.query.filter_by(email=email).first()
 
-    if not user or not verify_password(password, user.password):
-        return {"error": "Invalid email or password"}, 401
+    #Check if email or password are empty
+    if not email or not password:
+        return make_response(
+            jsonify({
+                "error": "Email and password required",
+                "code": 400
+            }),
+            400
+        )
 
-    token = create_access_token(identity=user.id)
+    try:
+        user = User.query.filter_by(email=email).first()
 
-    return {
-        "access_token": token,
-        "user": {
-            "id": user.id,
-            "name": user.name,
-            "email": user.email
-        }
-    }, 200
+        if not user or not verify_password(password, user.password):
+            return make_response(
+                jsonify({
+                    "error": "Invalid email or password", 
+                    "code": 401
+                }),
+                401
+            )
+
+        token = create_access_token(identity=user.id)
+        
+        return make_response(
+            jsonify({
+                "access_token": token,
+                "user": {
+                    "id": user.id,
+                    "name": user.name,
+                    "email": user.email
+                },
+                "code": 200
+            }),
+            200
+        )
+
+    except Exception as e:
+        return make_response(
+            jsonify({
+                "error": "Authentication failed",
+                "details": str(e),
+                "code": 500
+            }),
+            500
+        )
