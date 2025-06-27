@@ -54,7 +54,25 @@ def _validate_book_data(data):
 #Start of Service Methods
 
 def create_book(data):
-
+    """
+    Creates a new book with authors and categories
+    
+    Args:
+        data: {
+            title: str,
+            description: str|None,
+            price: float,
+            release_date: str (YYYY-MM-DD),
+            author_names: list[str],
+            category_names: list[str]
+        }
+    
+    Returns:
+        tuple: (response, status_code)
+        Success (201): Created book data
+        Error (400): Validation/title exists
+        Error (500): Creation failed
+    """
     try:
         _validate_book_data(data)
         
@@ -108,7 +126,19 @@ def create_book(data):
         )
 
 def get_book_by_id(book_id):
-
+    """
+    Retrieves a single book with authors and categories
+    
+    Args:
+        book_id: int
+    
+    Returns:
+        tuple: (response, status_code)
+        Success (200): Full book details
+        Error (400): Invalid ID
+        Error (404): Not found
+        Error (500): Fetch failed
+    """
     try:
         if not isinstance(book_id, int) or book_id <= 0:
             return make_response(
@@ -160,7 +190,21 @@ def get_book_by_id(book_id):
         )
 
 def get_all_books(page, limit, price=None, release_date=None):
-
+    """
+    Retrieves paginated, filterable book list
+    
+    Args:
+        page: int (≥1)
+        limit: int (≥1)
+        price: float|None
+        release_date: str|None (YYYY-MM-DD)
+    
+    Returns:
+        tuple: (response, status_code)
+        Success (200): Paginated results
+        Error (400): Invalid params
+        Error (500): Fetch failed
+    """
     try:
         if page < 1 or limit < 1:
             return make_response(
@@ -239,7 +283,25 @@ def get_all_books(page, limit, price=None, release_date=None):
         )
 
 def update_book(data):
-
+    """
+    Updates existing book details
+    
+    Args:
+        data: {
+            id: int (required),
+            title: str|None,
+            description: str|None, 
+            price: float|None,
+            release_date: str|None (YYYY-MM-DD)
+        }
+    
+    Returns:
+        tuple: (response, status_code)
+        Success (200): Updated book/no changes
+        Error (400): Invalid ID
+        Error (404): Not found
+        Error (500): Update failed
+    """
     try:
         if not data.get("id") or data["id"] <= 0:
             return make_response(
