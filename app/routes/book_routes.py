@@ -27,13 +27,8 @@ def add_book():
 @book_bp.route("/<int:book_id>", methods=["GET"])
 @jwt_required()
 def get_book(book_id):
-    """
-    - Retrieves a book by its ID
-    - Returns: book data + authors + categories
-    """
-    book_data = get_book_by_id(book_id)
 
-    return jsonify(book_data), 200
+    return get_book_by_id(book_id)
 
 @book_bp.route("", methods=["GET"])
 @jwt_required()

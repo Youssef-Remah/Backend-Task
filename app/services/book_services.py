@@ -78,7 +78,17 @@ def create_book(data):
             db.session.add(BookCategory(book_id=book.id, category_id=category.id))
 
         db.session.commit()
-        return book
+        return make_response(
+            jsonify({
+                "id": book.id,
+                "title": book.title,
+                "description": book.description,
+                "price": book.price,
+                "release_date": str(book.release_date),
+                "code": 201
+            }),
+            201
+        )
 
     except ValueError as e:
         db.session.rollback()
@@ -91,38 +101,57 @@ def create_book(data):
             500
         )
 
-
 def get_book_by_id(book_id):
-    
-    book = Book.query.get(book_id)
 
-    if not book:
-        abort(404, description="Book not found")
+    try:
+        if not isinstance(book_id, int) or book_id <= 0:
+            return make_response(
+                jsonify({"error": "Invalid book ID", "code": 400}),
+                400
+            )
 
-    author_ids = db.session.query(BookAuthor.author_id).filter_by(book_id=book.id).all()
+        book = Book.query.get(book_id)
 
-    authors = Author.query.filter(Author.id.in_([a[0] for a in author_ids])).all()
+        if not book:
+            return make_response(
+                jsonify({"error": "Book not found", "code": 404}),
+                404
+            )
 
-    author_names = [author.name for author in authors]
+        #Get authors using inner join
+        authors = Author.query.join(BookAuthor).filter(
+            BookAuthor.book_id == book.id
+        ).all()
 
-    
-    category_ids = db.session.query(BookCategory.category_id).filter_by(book_id=book.id).all()
+        #Get categories using inner join
+        categories = Category.query.join(BookCategory).filter(
+            BookCategory.book_id == book.id
+        ).all()
 
-    categories = Category.query.filter(Category.id.in_([c[0] for c in category_ids])).all()
+        return make_response(
+            jsonify({
+                "id": book.id,
+                "title": book.title,
+                "description": book.description,
+                "price": book.price,
+                "release_date": book.release_date.strftime("%Y-%m-%d"),
+                "created_at": book.created_at.strftime("%Y-%m-%d %H:%M:%S") if book.created_at else None,
+                "authors": [a.name for a in authors],
+                "categories": [c.name for c in categories],
+                "code": 200
+            }),
+            200
+        )
 
-    category_names = [category.name for category in categories]
-
-    return {
-        "id": book.id,
-        "title": book.title,
-        "description": book.description,
-        "price": book.price,
-        "release_date": book.release_date.strftime("%Y-%m-%d"),
-        "created_at": book.created_at.strftime("%Y-%m-%d %H:%M:%S") if book.created_at else None,
-        "authors": author_names,
-        "categories": category_names
-    }
-
+    except Exception as e:
+        return make_response(
+            jsonify({
+                "error": "Failed to fetch book",
+                "details": str(e),
+                "code": 500
+            }),
+            500
+        )
 
 def get_all_books(page, limit, price=None, release_date=None):
     query = Book.query.order_by(Book.created_at.desc())
