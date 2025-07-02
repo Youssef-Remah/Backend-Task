@@ -396,12 +396,15 @@ definitions:
         example: "The Great Gatsby (Revised Edition)"
       description:
         type: "string"
+        example: "A story of wealth and love in the 1920s Revised Edition"
       price:
         type: "number"
         format: "float"
+        example: 19.99
       release_date:
         type: "string"
         format: "date"
+        example: "1925-09-10"
 
   BookResponse:
     type: "object"
